@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ResellStarter</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#e9edf7;background:#0d1220}
+*{box-sizing:border-box}body{margin:0}main{max-width:950px;margin:auto;padding:24px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:2.3rem;margin-bottom:8px}p{color:#aebbd0}.tag{color:#7fe6c1}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:25px 0}
+button{cursor:pointer;border:0;border-radius:10px;padding:11px 16px;background:#25324d;color:white}
+button.active,.primary{background:#63dfb1;color:#08261d;font-weight:700}
+.panel{background:#161f31;border:1px solid #2c3b55;border-radius:18px;padding:22px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:.9rem;color:#c3d1e6;margin-bottom:5px}
+input,select,textarea{width:100%;background:#0e1626;border:1px solid #41506a;border-radius:9px;padding:11px;color:white;font:inherit}
+textarea{min-height:110px}strong.value{font-size:2rem;color:#78e9bd}
+small{color:#aebbd0}table{width:100%;border-collapse:collapse}
+td,th{padding:10px;text-align:left;border-bottom:1px solid #334159}
+section[hidden]{display:none}footer{font-size:.8rem;color:#9aa9bf;margin:40px 0}
+button:focus-visible,input:focus-visible{outline:2px solid #a1ffe0}
+</style></head><body><main>
+<header><b>↗ ResellStarter</b><span class="tag">Kostenlos · Beta</span></header>
+<h1>Dein Reselling. Einfach organisiert.</h1>
+<p>Berechne Gewinne, verwalte Artikel und erstelle Verkaufsbeschreibungen – ohne Konto.</p>
+<nav><button class="active" data-tab="calc">Gewinnrechner</button><button data-tab="items">Dashboard</button><button data-tab="listing">Listing-Generator</button></nav>
+<section id="calc" class="panel"><h2>Gewinnrechner</h2><div class="grid">
+<div><label for="buy">Einkaufspreis (€)</label><input id="buy" type="number" min="0" step="0.01" value="12"></div>
+<div><label for="sell">Verkaufspreis (€)</label><input id="sell" type="number" min="0" step="0.01" value="25"></div>
+<div><label for="fees">Deine zusätzlichen Kosten (€)</label><input id="fees" type="number" min="0" step="0.01" value="2"></div>
+</div><p>Geschätzter Gewinn</p><strong class="value" id="profit">11,00 €</strong><p><small>Ohne Steuern. Nur Kosten berücksichtigen, die du tatsächlich selbst trägst.</small></p></section>
+<section id="items" class="panel" hidden><h2>Artikel-Dashboard</h2><div class="grid">
+<div><label for="name">Artikel</label><input id="name" placeholder="z. B. Vintage Hoodie"></div>
+<div><label for="cost">Einkauf (€)</label><input id="cost" type="number" min="0" step="0.01" value="10"></div>
+<div><label for="price">Verkauf (€)</label><input id="price" type="number" min="0" step="0.01" value="20"></div>
+<div><label for="extra">Zusatzkosten (€)</label><input id="extra" type="number" min="0" step="0.01" value="0"></div>
+</div><p><button class="primary" id="add">Artikel hinzufügen</button></p><div style="overflow:auto"><table><thead><tr><th>Artikel</th><th>Gewinn</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+<p id="total"></p><small>Die Artikel werden nur in diesem Browser gespeichert. Löschen der Browserdaten entfernt sie.</small></section>
+<section id="listing" class="panel" hidden><h2>Listing-Generator</h2><div class="grid">
+<div><label for="brand">Marke</label><input id="brand" placeholder="z. B. Nike"></div>
+<div><label for="kind">Artikelart</label><input id="kind" placeholder="z. B. Hoodie"></div>
+<div><label for="size">Größe</label><input id="size" placeholder="z. B. M"></div>
+<div><label for="condition">Zustand</label><select id="condition"><option>Sehr gut</option><option>Gut</option><option>Neu mit Etikett</option><option>Neu ohne Etikett</option><option>Akzeptabel</option></select></div>
+</div><p><button class="primary" id="generate">Beschreibung erstellen</button></p>
+<label for="output">Deine Beschreibung</label><textarea id="output" readonly></textarea><p><button id="copy">Text kopieren</button></p>
+<small>Vor dem Veröffentlichen prüfen und eventuelle Mängel ehrlich ergänzen.</small></section>
+<footer>ResellStarter · Kostenloses Starterprojekt · Keine Verbindung zu Vinted</footer></main>
+<script>
+const $=id=>document.getElementById(id),money=n=>n.toLocaleString('de-DE',{style:'currency',currency:'EUR'});
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('section').forEach(s=>s.hidden=s.id!==b.dataset.tab)}));
+function number(id){return Math.max(0,Number($(id).value)||0)}function calc(){$('profit').textContent=money(number('sell')-number('buy')-number('fees'))}
+['buy','sell','fees'].forEach(id=>$(id).addEventListener('input',calc));calc();
+let items=[];try{items=JSON.parse(localStorage.getItem('resell-items')||'[]');if(!Array.isArray(items))items=[]}catch{}
+function render(){const rows=$('rows');rows.replaceChildren();let sum=0;items.forEach((it,i)=>{const gain=it.price-it.cost-it.extra;sum+=gain;const tr=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td'),del=document.createElement('button');a.textContent=it.name;b.textContent=money(gain);del.textContent='Löschen';del.addEventListener('click',()=>{items.splice(i,1);save()});c.append(del);tr.append(a,b,c);rows.append(tr)});$('total').textContent='Gesamter geschätzter Gewinn: '+money(sum)}
+function save(){localStorage.setItem('resell-items',JSON.stringify(items));render()}
+$('add').addEventListener('click',()=>{const name=$('name').value.trim();if(!name){alert('Bitte einen Artikelnamen eingeben.');return}items.push({name,cost:number('cost'),price:number('price'),extra:number('extra')});$('name').value='';save()});render();
+$('generate').addEventListener('click',()=>{const brand=$('brand').value.trim(),kind=$('kind').value.trim(),size=$('size').value.trim(),condition=$('condition').value;$('output').value=[`${[brand,kind].filter(Boolean).join(' ')||'Artikel'} zu verkaufen.`,`Größe: ${size||'Bitte ergänzen'}`,`Zustand: ${condition} (bitte prüfen und Mängel ergänzen).`,'Bei Fragen gerne melden!'].join('\\n')});
+$('copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('output').value);$('copy').textContent='Kopiert!';setTimeout(()=>$('copy').textContent='Text kopieren',1500)}catch{$('output').select();alert('Text markieren und kopieren.')}});
+</script></body></html>
